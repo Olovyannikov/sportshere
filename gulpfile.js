@@ -10,8 +10,8 @@ let path = {
 		fonts: project_folder + '/fonts/',
 	},
 	src: {
-		html: [source_folder + '/html/*.html', "!"+source_folder + '/**/_*.html'],
-		pug: [source_folder + '/pug/pages/*.pug', "!"+source_folder + '/**/_*.pug'],
+		html: [source_folder + '/html/*.html', "!" + source_folder + '/**/_*.html'],
+		pug: [source_folder + '/pug/pages/*.pug', "!" + source_folder + '/**/_*.pug'],
 		css: source_folder + '/scss/style.scss',
 		js: source_folder + '/js/script.js',
 		img: source_folder + '/img/**/*.{png,jpeg,jpg,svg,gif,ico,webp}',
@@ -28,7 +28,7 @@ let path = {
 }
 
 //Объявляем переменные
-let {src, dest} = require('gulp'),
+let { src, dest } = require('gulp'),
 	gulp = require('gulp'),
 	browsersync = require('browser-sync').create(), //Инициализация локального сервера
 	fileinclude = require('gulp-file-include'), // Для подключения файлов друг в друга
@@ -46,11 +46,13 @@ let {src, dest} = require('gulp'),
 	svgSprite = require('gulp-svg-sprite'),
 	ttf2woff = require('gulp-ttf2woff'),
 	ttf2woff2 = require('gulp-ttf2woff2'),
-	pug = require('gulp-pug');
+	pug = require('gulp-pug'),
+	plumber = require('gulp-plumber'),
+	notify = require('gulp-notify');
 
 function browserSync() {
 	browsersync.init({
-		server:{
+		server: {
 			baseDir: './' + project_folder + "/"
 		},
 		port: 3000,
@@ -60,19 +62,23 @@ function browserSync() {
 
 function pug2html() {
 	return src(path.src.pug)
-		.pipe(pug())
+		.pipe(plumber({
+			errorHandler: notify.onError(function (err) {
+				return {
+					title: 'Pug',
+					sound: false,
+					message: err.message
+				}
+			})
+		}))
+		.pipe(pug({
+			pretty: true
+		}))
 		.pipe(webphtml())
 		.pipe(dest(path.build.html))
 		.pipe(browsersync.stream())
 }
 
-function html() {
-	return src(path.src.html)
-		.pipe(fileinclude({ prefix: '@@' }))
-		.pipe(webphtml())
-		.pipe(dest(path.build.html))
-		.pipe(browsersync.stream())
-}
 
 function css() {
 	return src(path.src.css)
@@ -130,7 +136,7 @@ function images() {
 		.pipe(
 			imagemin({
 				progressive: true,
-				svgoPlugins: [{removeViewBox: false}],
+				svgoPlugins: [{ removeViewBox: false }],
 				interlaced: true,
 				optimizationLevel: 3
 			})
@@ -148,7 +154,7 @@ function fonts() {
 		.pipe(dest(path.build.fonts));
 }
 
-function svgsprite () {
+function svgsprite() {
 	return gulp.src([source_folder + '/img/icons/*.svg'])
 		.pipe(svgSprite({
 			mode: {
@@ -161,7 +167,6 @@ function svgsprite () {
 }
 
 function watchFiles(params) {
-	gulp.watch([path.watch.html], html);
 	gulp.watch([path.watch.pug], pug2html);
 	gulp.watch([path.watch.css], css);
 	gulp.watch([path.watch.js], js);
@@ -172,7 +177,7 @@ function clean(params) {
 	return del(path.clean);
 }
 
-let build = gulp.series(clean, gulp.parallel(svgsprite, images, js, css, pug2html, html, fonts));
+let build = gulp.series(clean, gulp.parallel(svgsprite, images, js, css, pug2html, fonts));
 let watch = gulp.parallel(build, watchFiles, browserSync);
 
 exports.pug2html = pug2html;
@@ -181,7 +186,6 @@ exports.svgsprite = svgsprite;
 exports.images = images;
 exports.js = js;
 exports.css = css;
-exports.html = html;
 exports.build = build;
 exports.watch = watch;
 exports.default = watch;

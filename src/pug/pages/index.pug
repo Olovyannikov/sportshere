@@ -1,8 +1,17 @@
 <!DOCTYPE html>
 html(lang="en")
     head
-        meta(charset="UTF-8")
-        meta(name="viewport", content="width=device-width, initial-scale=1.0")
-        title Document
-    body
+        include ./../sections/_head.pug
         
+    body.no-js
+        section.main
+            include ./../sections/_header.pug
+            include ./../sections/_promo.pug
+            include ./../sections/_simple.pug
+            include ./../sections/_features.pug
+            include ./../sections/_tabsblock.pug
+            include ./../sections/_simple-2.pug
+            include ./../sections/_subscribe.pug
+            include ./../sections/_footer.pug
+            
+        script(src="js/script.min.js")
